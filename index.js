@@ -9,6 +9,8 @@ function ask(questionText) {
 
 start();
 
+let ans;
+
 class Location {
   constructor(name, description, look) {
     this.name = name
@@ -21,7 +23,7 @@ class Location {
 let playerActionHelp = {
   help: `Type 'help' to see type commands you can perform`,
   move: `Typing 'move [direction]' will allow you to move between rooms`,
-  use: `Typing 'use [item]' in a specific room will allow you to interact with certain objects`,
+  use: `Typing 'use [item] on [object]' in a specific room will allow you to interact with certain objects`,
   look: `Typing 'look' will give you a description of the room and possible objects in the room you may interact with`,
   read: `Typing 'read [item]' will allow you to read certain text on an object`,
   inventory: `Typing 'inventory' will allow the player to look at current items they hold`,
@@ -79,7 +81,7 @@ const locationStates = {
   roomFive: [],
 }
 
-//fxn that moves player
+//fxn that updates the lcoationCurrent
 function moveLocationFx(newLocation) {
   if (locationStates[locationCurrent].includes(newLocation)) {
     locationCurrent = newLocation
@@ -89,35 +91,116 @@ function moveLocationFx(newLocation) {
   }
 }
   
-//object for status of objects --> to help with no repeat take/drop items
-//'out' is not taken, 'in' is in invetnory
-let itemStatus = {
-  paper: 'out',
-  key: 'out',
-  shovel: 'out',
-  redLiquid: 'out',
-  blueLiquid: 'out',
+//fxn that moves the player based off their input --> possibly change to class method/switch statement
+//update for cardinal directions vs player POV
+function playerMovementFx(answer) {
+  if (locationCurrent === 'home' && answer === 'north') {
+    return moveLocationFx('roomTwo')
+  } else if (locationCurrent === 'home' && answer === 'west') {
+    return moveLocationFx('roomThree')
+  } else if (locationCurrent === 'home' && answer === 'south' && closedDoors.doorTwo === 'closed') {
+    console.log('You try to open the door. It is locked')
+  }
+
+  if (locationCurrent === 'roomTwo' && answer === 'south') {
+    return moveLocationFx('home')
+  }
+
+  if (locationCurrent === 'roomThree' && answer === 'east') {
+    return moveLocationFx('home')
+  } else if (locationCurrent === 'roomThree' && answer === 'south' && closedDoors.doorOne === 'closed') {
+    console.log('You try to open the door. It is locked')
+  } else if (locationCurrent === 'roomThree' && answer === 'south' && closedDoors.doorOne === 'open') {
+    return moveLocationFx('roomFour')
+  }
+
+  if (locationCurrent === 'roomFour' && answer === 'east' && closedDoors.boulder === 'closed') {
+    return console.log('A boulder is blocking your path. ')
+  } else if (locationCurrent === 'roomFour' && answer === 'east' && closedDoors.boulder === 'open') {
+    return moveLocationFx('hallway')
+  } else if (locationCurrent === 'roomFour' && answer === 'north') {
+    return moveLocationFx('roomThree')
+  }
+
+  if (locationCurrent === 'hallway' && answer === 'continue') {
+    console.log('you continue forward.')
+  } else if (locationCurrent === 'hallway' && answer === 'back') {
+    
+  }
+
 }
 
-let playerInventory = {
-  items: [" "],
-
-  //add functions that add/remove items in players inventories
-  addItemFx() {
-    return console.log(`item added`)
-  },
-
-  dropItemFx() {
-    return console.log(`dropped item`)
-  },
-
-  //fxn for usable items
-  useItemFx() {
-    return console.log(`Used item`)
+//object for status of objects --> to help with no repeat take/drop items
+//'out' is not taken, 'in' is in invetnory
+class itemStatusClass {
+  constructor(taken, location, description) {
+    this.taken = taken
+    this.location = location
+    this.description = description
   }
 }
 
-//fxn for readable items
+let sign = new itemStatusClass('non', 'home', '...Not again...')
+let paper = new itemStatusClass('out', 'roomTwo', 'The paper has scribbles on it. A key falls on the ground when you open the paper.')
+let key = new itemStatusClass('out', 'roomTwo', 'The key looks like it could open a door.')
+let shovel = new itemStatusClass('out', 'roomThree', 'It is an old and rusted shovel.')
+let redLiquid = new itemStatusClass('out', 'roomFive', 'Red Liquid?')
+let blueLiquid = new itemStatusClass('out', 'roomFive', 'Blue Liquid?')
+
+let itemStatus = {
+  'sign': sign,
+  'paper': paper,
+  'key': key,
+  'shovel': shovel,
+  'redLiquid': redLiquid,
+  'blueLiquid': blueLiquid
+}
+
+let playerInventory = {
+  items: [ ],
+  
+  //add functions that add/remove items in players inventories
+  addItemFx(answer) {
+    if (itemStatus[answer].taken === 'out' && itemStatus[answer].location === locationCurrent) {
+      itemStatus[answer].taken = 'in'
+      this.items.push(answer)
+      return console.log(`${answer} added to inventory. ${itemStatus[answer].description} `)
+    } else if (itemStatus[answer].taken === 'in') {
+      return console.log(`${answer} is already in your inventory`)
+    } else if (itemStatus[answer].taken === 'out' && itemStatus[answer].location !== locationCurrent) {
+      return console.log(`You cannot take that.`)
+    } else {
+      return console.log(`You cannot take that.`)
+    }
+  },
+  
+  dropItemFx(answer) {
+    if (itemStatus[answer].taken === 'in') {
+    itemStatus[answer].taken = 'out'
+    let newItemList = this.items.filter((item) => item !== answer)
+    this.items = newItemList
+    return console.log(`dropped ${answer}. `)
+    } else if (itemStatus[answer].taken === 'out') {
+      console.log(`You do not have ${answer} in your inventory. `)
+    }
+  },
+
+  //fxn for reading inventory vs outside items??
+  readFx(answer) {
+    if (itemStatus[answer].taken === 'in')
+    return console.log(`It reads,'${itemStatus[answer].description}'`)
+  },
+
+  //fxn for usable items
+  useItemFx(answer) {
+    if (answer === 'key')
+
+    if (answer === 'shovel')
+
+    if (answer === '')
+  }
+}
+
 
 //game starts here
 async function start() {
@@ -125,7 +208,8 @@ async function start() {
   You look down at your hands, they are small... hairy... you are unfamiliar with them.  
   You cross your eyes to see something near your pointed nose. Whiskers? 
   You notice your roundish body and get hit with something unexpected. You see a tail out the corner of your eye. 
-  You are... afraid.`;
+  You are... afraid. 
+  (hint: type 'help' to see a list of commands!)`;
 
   console.log(welcomeMessage)
 
@@ -133,23 +217,41 @@ async function start() {
     let answer = await ask('> ');
     if (answer.includes('move')) {
       let moveRoom = answer.split(' ')
-      moveLocationFx(moveRoom[1])
+      // moveLocationFx(moveRoom[1])
+      playerMovementFx(moveRoom[1])
     } else if (answer === 'help') {
       console.log(playerActionHelp)
-    } else if (answer === 'inventory') {
-      console.log(playerInventory.items)
     } else if (answer.includes('use')) {
       console.log(`cannot use rn`)
+    } else if (answer === 'inventory') {
+      if (playerInventory.items == false) {
+        console.log(`Your inventory is empty`)
+      } else {
+      console.log(playerInventory.items) }
     } else if (answer === 'look') {
       console.log(`${locationLookUp[locationCurrent].description}` + `${locationLookUp[locationCurrent].look}`)
+    } else if (answer.includes('read')) {
+      let readItem = answer.split(' ')
+      playerInventory.readFx(readItem[1])
     } else if (answer.includes('take')) {
-      playerInventory.addItemFx()
+      let addItem = answer.split(' ')
+      if (itemStatus.hasOwnProperty(addItem[1])) {
+      playerInventory.addItemFx(addItem[1])
+      } else {
+        console.log(`You cannot take that.`)
+      }
     } else if (answer.includes('drop')) {
-      playerInventory.dropItemFx()
+      let dropItem = answer.split(' ')
+      playerInventory.dropItemFx(dropItem[1])
+    } else {
+      console.log(`${answer} is not a valid action`)
     }
-  } while (locationCurrent !== 'roomFive')
+
+  } while (locationCurrent !== 'hallway')
 
   //hallway await ask statement
+  let hallwayAnswer = await ask('')
+
 
   process.exit();
 }
