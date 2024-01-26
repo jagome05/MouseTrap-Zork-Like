@@ -19,11 +19,16 @@ function ask(questionText) {
 let ans;
 
 class Location {
-  constructor(name, description, look, exits) {
+  constructor(name, description, look, lock, exits) {
     this.name = name
     this.description = description
     this.look = look
+    this.lock = lock
     this.exits = exits
+  }
+
+  openLock() {
+    this.lock = 'open'
   }
 }
 
@@ -42,39 +47,38 @@ let playerActionHelp = {
 let home = new Location('Starting Room', 
 'In the room you are in there is a sign. You look around and there is one hole in the room to the north and one to the west. \nYou look through the holes but darkness covers the beyond. There is a door to the south.',
 'In the room you are in there is a sign. You look around and there is one hole in the room to the north and one to the west. \nYou look through the holes but darkness covers the beyond. There is a door to the south.',
+'open',
 `North   South   West`)
 let roomTwo = new Location('North Room', 
 `You slowly move towards the hole. 
 You enter and its another room. There are no other holes besides the one you came from.`,
 `You look around the room. There is a piece of paper on the ground.`,
+'open',
 `South`)
 let roomThree = new Location('West Room', 
 `You walk hesitantly towards the hole. You take a step in and notice a room with a door on the other side of the room. `,
 `You see a locked door to the west. There is also a shovel on the floor. `,
+'open',
 `East   South`)
 let roomFour = new Location('Boulder Room', 
 `You walk in. There is a giant boulder in the room. `,
 `There is a boulder in the room. You peek behind it and there appears to be a hallway. You cannot squeeze through it though.`,
+'lock',
 `North   East`)
 let hallway = new Location('Hallway', 
 `Past the bolder is a long hallway. It extends into darkness. You make your way down the hallway. You keep your hand along the cobblestone wall to guide you. 
-After awhile you've lost track of your steps. When will you reach another room, a door, light? You see nothing. All you hear are your breaths. They become heavier the more you think about being stuck in this hallway. 
-Fear hits you. `,
+After awhile you've lost track of your steps. When will you reach another room, a door, light? You see nothing. All you hear are your breaths. \nThey become heavier the more you think about being stuck in this hallway. 
+Fear hits you. Do you wish to continue forward or go back?`,
 `You cannot see anything. `,
-`Continue   Back`)
+'lock',
+`Forward   Back`)
 let roomFive = new Location('Last Room?', 
 `Eventually you see light. You rush over with your tiny legs. It is a gigantic room. There is blinding light coming from above, and as you try to look into the distance everything becomes blurry. `,
 `You look around but it is hard to see. There appears to be giant  pieces of broken glass on the floor in front of you. Near the pieces of glass are ponds of colorful liquids. One is red liquid, the other is blue liquid.`,
-`None?`)
+'open',
+`???`)
 
 let locationCurrent = 'home'
-
-//add inputs for locked doors
-let closedDoors = {
-  doorOne: 'closed',
-  doorTwo: 'closed',
-  boulder: 'closed',
-}
 
 // key is.... value is the 'Location" object --> use locationLookUp[locationCurrent].description for look
 const locationLookUp = {
@@ -85,7 +89,6 @@ const locationLookUp = {
   'hallway': hallway,
   'roomFive': roomFive,
 }
-
 
 //state machine that defines which rooms the player can move to/from
 const locationStates = {
@@ -108,13 +111,13 @@ function moveLocationFx(newLocation) {
 }
 
 //fxn that moves the player based off their input --> possibly change to class method/switch statement
-//update for cardinal directions vs player POV, and if approaching a locked door??
+//possibly add array for 'story beats' so that 'enter new room text' !== 'reentering a previously visited room'/adding a new attribute
 function playerMovementFx(answer) {
   if (locationCurrent === 'home' && answer === 'north') {
     return moveLocationFx('roomTwo')
   } else if (locationCurrent === 'home' && answer === 'west') {
     return moveLocationFx('roomThree')
-  } else if (locationCurrent === 'home' && answer === 'south' && closedDoors.doorTwo === 'closed') {
+  } else if (locationCurrent === 'home' && answer === 'south') {
     return console.log('You try to open the door. It is locked')
   }
   
@@ -124,15 +127,16 @@ function playerMovementFx(answer) {
 
   if (locationCurrent === 'roomThree' && answer === 'east') {
     return moveLocationFx('home')
-  } else if (locationCurrent === 'roomThree' && answer === 'south' && closedDoors.doorOne === 'closed') {
+  } else if (locationCurrent === 'roomThree' && answer === 'south' && roomFour.lock === 'lock') {
     return console.log('You try to open the door. It is locked')
-  } else if (locationCurrent === 'roomThree' && answer === 'south' && closedDoors.doorOne === 'open') {
+  } else if (locationCurrent === 'roomThree' && answer === 'south' && roomFour.lock === 'open') {
     return moveLocationFx('roomFour')
   }
-  
-  if (locationCurrent === 'roomFour' && answer === 'east' && closedDoors.boulder === 'closed') {
+
+  //possibly update .exits AFTER character looks in room
+  if (locationCurrent === 'roomFour' && answer === 'east' && hallway.lock === 'lock') {
     return console.log('A boulder is blocking your path. ')
-  } else if (locationCurrent === 'roomFour' && answer === 'east' && closedDoors.boulder === 'open') {
+  } else if (locationCurrent === 'roomFour' && answer === 'east' && hallway.lock === 'open') {
     return moveLocationFx('hallway')
   } else if (locationCurrent === 'roomFour' && answer === 'north') {
     return moveLocationFx('roomThree')
@@ -140,8 +144,9 @@ function playerMovementFx(answer) {
     console.log(`You cannot move there.`)
   }
   
-  if (locationCurrent === 'hallway' && answer === 'continue') {
+  if (locationCurrent === 'hallway' && answer === 'forward') {
     console.log('you continue forward.')
+    return moveLocationFx('roomFive')
   } else if (locationCurrent === 'hallway' && answer === 'back') {
     console.log(`You feel the ground shake underneath you. You panic. You turn around and walk back from where you came. It seems like a further walk back than you remember. Eventually you hit a wall. It is still dark and you can't see anything.`
     `You are hitting the wall to see if it will move or if there is anything you can open it with. Nothing. It is getting harder to breathe. You've lost your sense of dircetion.`
@@ -149,11 +154,9 @@ function playerMovementFx(answer) {
     `You feel the ground shake underneath you again. You're losing your sanity. You run as fast as you can forward. You hit a wall. You feel dread. You don't know where you are. You don't know how to get out. Your legs give in. You give up.`)
     process.exit()
   }
-
 }
 
 //object for status of objects --> to help with no repeat take/drop items
-//'out' is not taken, 'in' is in invetnory
 class itemStatusClass {
   constructor(taken, location, description, useItem) {
     this.taken = taken
@@ -161,12 +164,9 @@ class itemStatusClass {
     this.description = description
     this.useItem = useItem
   }
-  
 }
 
-//add a specific attribute to key/shovel?
-
-let sign = new itemStatusClass('in', 'home', '...Not again...', `'...Not again...'`)
+let sign = new itemStatusClass('non', 'home', '...Not again...', `'...Not again...'`)
 let paper = new itemStatusClass('out', 'roomTwo', 'The paper has scribbles on it. A key falls on the ground when you open the paper.',
  '"..Day 2......test subjects.....lab....accidents..Day 89...')
 let key = new itemStatusClass('out', 'roomTwo', 'The key looks like it could open a door.', 'You use the key on the door. It unlocks it.')
@@ -201,6 +201,7 @@ let playerInventory = {
     }
   },
   
+  //possibly update drop fxn to where they drop in currentLocation and update this.location class
   dropItemFx(answer) {
     if (itemStatus[answer].taken === 'in') {
     itemStatus[answer].taken = 'out'
@@ -212,7 +213,7 @@ let playerInventory = {
     }
   },
 
-  //fxn for reading inventory vs outside items??
+  //fxn for reading inventory vs outside items?? --> update paper for if NOT in inventory(still have key fall out some how)
   readFx(answer) {
     if (locationCurrent === itemStatus[answer].location && itemStatus[answer].taken === 'in') {
       return console.log(`It reads,'${itemStatus[answer].useItem}'`)
@@ -224,19 +225,24 @@ let playerInventory = {
   }
 }
 
-key.lock() = 
-shovel.lock() = 
-
-//usable item fxn
+//usable item fxn -- possibly update with use [item] on [this]??
 function useItemFx(answer) {
-  //include answer.hasOwnProperty(itemStatus[answer].useItem) ?
-  if (answer.includes('key') && answer.includes('door') && itemStatus[answer].taken === 'in' && ) {
+  if (itemStatus[answer].taken === 'in' && answer.includes('key') && locationCurrent === 'roomThree') {
+    console.log(`${key.useItem}`)
+    return roomFour.openLock()
+  } else if (itemStatus[answer].taken === 'in' && answer.includes('key') && locationCurrent === 'home') {
+    return console.log(`You try using the key on the door. It does not unlock the door. You shake as you suddenly hear glass break on the other side of the door...`)
+  } else if (itemStatus[answer].taken === 'in' && answer.includes('shovel') && locationCurrent === 'roomFour') {
+    console.log(`${shovel.useItem}`)
+    return hallway.openLock()
+    //add drink option for liquids
+  } else {
+    return console.log(`You cannot use that.`)
   }
 }
 
 start();
 
-//game starts here
 async function start() {
   const welcomeMessage = `You awake. You look around the room and you are encased in a room of cobble and wood. You remember nothing. 
   You look down at your hands, they are small... hairy... you are unfamiliar with them.  
@@ -249,25 +255,32 @@ async function start() {
   let locationStatus = locationLookUp[locationCurrent].name
   let locationExits = locationLookUp[locationCurrent].exits
   do {
+    //add color txt??
     let answer = await ask(`Current Room: ${locationStatus}   Exits: ${locationExits} \n> `);
     if (answer.includes('move')) {
       let moveRoom = answer.split(' ')
       playerMovementFx(moveRoom[1].toLowerCase())
+
     } else if (answer === 'help') {
       console.log(playerActionHelp)
+
     } else if (answer.includes('use')) {
       let playerUseItem = answer.split(' ')
       useItemFx(playerUseItem[1].toLowerCase())
+
     } else if (answer === 'inventory') {
       if (playerInventory.items == false) {
         console.log(`Your inventory is empty`)
       } else {
       console.log(playerInventory.items) }
+
     } else if (answer === 'look') {
       console.log(`${locationLookUp[locationCurrent].look}`)
+
     } else if (answer.includes('read')) {
       let readItem = answer.split(' ')
       playerInventory.readFx(readItem[1].toLowerCase())
+
     } else if (answer.includes('take')) {
       let addItem = answer.split(' ')
       if (itemStatus.hasOwnProperty(addItem[1].toLowerCase())) {
@@ -275,19 +288,18 @@ async function start() {
       } else {
         console.log(`You cannot take that.`)
       }
+
     } else if (answer.includes('drop')) {
       let dropItem = answer.split(' ')
       playerInventory.dropItemFx(dropItem[1].toLowerCase())
+
     } else {
       console.log(`${answer} is not a valid action`)
     }
     locationStatus = locationLookUp[locationCurrent].name
     locationExits = locationLookUp[locationCurrent].exits
-  } while (locationCurrent !== 'roomFive')
-
-    //roomFive await ask statement
-    // let  = await ask('')
-
+  } while (locationCurrent !== 'roomSix')
+  
 
   process.exit();
 }
