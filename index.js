@@ -7,11 +7,9 @@ function ask(questionText) {
   });
 }
 
-/*things to add/edit
-  Interactions with items
+/*things to possibly add/edit
   Opening closed doors --> go up to door? or specific command that recognizes user input?
   puzzle
-  status line at bottom of screen --> have it state what roomthey are in and exits!
   word wrapping fxn
   flavor text?
 */
@@ -91,12 +89,13 @@ const locationLookUp = {
 }
 
 //state machine that defines which rooms the player can move to/from
+//can possibly mix with class Location constructor
 const locationStates = {
   home: ['roomTwo', 'roomThree'],
   roomTwo: ['home'],
   roomThree:['home','roomFour'],
   roomFour: ['roomThree','hallway'],
-  hallway: ['roomFive'],
+  hallway: ['roomFive', 'forward', 'back'],
   roomFive: [],
 }
 
@@ -140,19 +139,23 @@ function playerMovementFx(answer) {
     return moveLocationFx('hallway')
   } else if (locationCurrent === 'roomFour' && answer === 'north') {
     return moveLocationFx('roomThree')
-  } else {
-    console.log(`You cannot move there.`)
   }
   
   if (locationCurrent === 'hallway' && answer === 'forward') {
     console.log('you continue forward.')
     return moveLocationFx('roomFive')
   } else if (locationCurrent === 'hallway' && answer === 'back') {
-    console.log(`You feel the ground shake underneath you. You panic. You turn around and walk back from where you came. It seems like a further walk back than you remember. Eventually you hit a wall. It is still dark and you can't see anything.`
-    `You are hitting the wall to see if it will move or if there is anything you can open it with. Nothing. It is getting harder to breathe. You've lost your sense of dircetion.`
-    `You turn around and decide to move forward. The darkness feels like it is creeping in. Each step is heavier as you are losing hope. You start wondering, 'What is going on? Why can't I escape?'`
-    `You feel the ground shake underneath you again. You're losing your sanity. You run as fast as you can forward. You hit a wall. You feel dread. You don't know where you are. You don't know how to get out. Your legs give in. You give up.`)
-    process.exit()
+    console.log(`You feel the ground shake underneath you. You panic. You turn around and walk back from where you came. 
+    It seems like a further walk back than you remember. Eventually you hit a wall. It is still dark and you can't see anything.
+    You are hitting the wall to see if it will move or if there is anything you can open it with. Nothing. It is getting harder to breathe. 
+    You've lost your sense of direction.
+    You turn around and decide to move forward. The darkness feels like it is creeping in. Each step is heavier as you are losing hope. You start wondering, 'What is going on? 
+    Why can't I escape?'
+    You feel the ground shake underneath you again. You're losing your sanity. You run as fast as you can forward. You hit a wall. You feel dread. 
+    You don't know where you are. You don't know how to get out. Your legs give in. You give up.`)
+    return process.exit()
+  } else {
+    console.log(`You cannot move there.`)
   }
 }
 
@@ -164,6 +167,14 @@ class itemStatusClass {
     this.description = description
     this.useItem = useItem
   }
+
+  updateDrop() {
+    this.location = locationCurrent
+  }
+
+  drinkFx() {
+    console.log(this.useItem)
+  }
 }
 
 let sign = new itemStatusClass('non', 'home', '...Not again...', `'...Not again...'`)
@@ -172,15 +183,15 @@ let paper = new itemStatusClass('out', 'roomTwo', 'The paper has scribbles on it
 let key = new itemStatusClass('out', 'roomTwo', 'The key looks like it could open a door.', 'You use the key on the door. It unlocks it.')
 let shovel = new itemStatusClass('out', 'roomThree', 'It is an old and rusted shovel.', 'You use the shovel on the boulder. You jam it at the bottom and use all your strength to move it. \nThe boulder budges slighlty enough for you to be able to squeeze through to the hole behind it.')
 let redLiquid = new itemStatusClass('out', 'roomFive', 'Red Liquid?', 'You cusp your hands together and gather the liquid in your tiny hands. \nYou drink the red liquid. It tastes disgusting. Nothing happens.')
-let blueLiquid = new itemStatusClass('out', 'roomFive', 'Blue Liquid?', `You gather the blue liquid in your hand and drink it. It tastes awful. \nYou feel nothing at first, but then you feel weird. You flinch as pain courses through your tiny body. You collapse on the ground... \nYou awake. It looks like you are in the same room, but it seems much smaller. The room is entirely white, but you look at the ground. There is glass on the floor with different covered liquids on the ground. \nAs you get up, you notice that your body has changed. Your hands aren't small and furry anymore. It looks like you've returned to normal. \nYou look around and notice one door in the room. There is a red print on the handle...`)
+let blueLiquid = new itemStatusClass('out', 'roomFive', 'Blue Liquid?', `You gather the blue liquid in your hand and drink it. It tastes awful. \nYou feel nothing at first, but then you feel weird. You flinch as pain courses through your tiny body. You collapse on the ground... \nYou awake. It looks like you are in the same room, but it seems much smaller. The room is entirely white, but you look at the ground. There is glass on the floor with different covered liquids on the ground. \nAs you get up, you notice that your body has changed. Your hands aren't small and furry anymore. It looks like you've returned to normal. \nYou look around and notice one door in the room. There is a red print on the handle.`)
 
 let itemStatus = {
   'sign': sign,
   'paper': paper,
   'key': key,
   'shovel': shovel,
-  'redLiquid': redLiquid,
-  'blueLiquid': blueLiquid
+  'red Liquid': redLiquid,
+  'blue Liquid': blueLiquid
 }
 
 let playerInventory = {
@@ -207,6 +218,7 @@ let playerInventory = {
     itemStatus[answer].taken = 'out'
     let newItemList = this.items.filter((item) => item !== answer)
     this.items = newItemList
+    itemStatus[answer].updateDrop()
     return console.log(`dropped ${answer}. `)
     } else if (itemStatus[answer].taken === 'out') {
       console.log(`You do not have ${answer} in your inventory. `)
@@ -293,14 +305,22 @@ async function start() {
       let dropItem = answer.split(' ')
       playerInventory.dropItemFx(dropItem[1].toLowerCase())
 
+    }  else if (answer.includes('drink')) {
+      if (answer.includes('red')) {
+        redLiquid.drinkFx()
+      } else if (answer.includes('blue')) {
+        blueLiquid.drinkFx()
+        blueLiquid.taken = 'in'
+      } else {
+        console.log(`What did you want to drink?`)
+      }
     } else {
       console.log(`${answer} is not a valid action`)
     }
     locationStatus = locationLookUp[locationCurrent].name
     locationExits = locationLookUp[locationCurrent].exits
-  } while (locationCurrent !== 'roomSix')
-  
-
+  } while (blueLiquid.taken !== 'in')
+  console.log(`Your brain hurts as you try to remember anything. You start to remember your name...\nYour name is John Wick.`)
   process.exit();
 }
 
