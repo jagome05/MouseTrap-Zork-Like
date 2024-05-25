@@ -13,15 +13,15 @@ Start index.js with command "node index.js"
 
 Type "help" to see a list of options you can do!
 
-Player inputs include:
-"help" - Type 'help' to see type commands you can perform
-"move [direction]" - Typing 'move [direction]' will allow you to move between rooms. (hint: move by saying north, south, east, west)
-"use [item] on [object]" - Typing 'use [item] on [object]' in a specific room will allow you to interact with certain objects
-"look" - Typing 'look' will give you a description of the room and possible objects in the room you may interact with
-"read" - Typing 'read [item]' will allow you to read certain text on an object
-"inventory" - Typing 'inventory' will allow the player to look at current items they hold
-"take" - Typing 'take [item]' will allow you to take certain items and keep them in your inventory to possibly use them later
-"drop" - Typing 'drop [item]' will drop an item and it will leave your inventory
+Player inputs include:  
+<strong>"help"</strong> - Type 'help' to see type commands you can perform  
+<strong>"move [direction]"</strong> - Typing 'move [direction]' will allow you to move between rooms. (hint: move by saying north, south, east, west)  
+<strong>"use [item] on [object]"</strong> - Typing 'use [item] on [object]' in a specific room will allow you to interact with certain objects  
+<strong>"look"</strong> - Typing 'look' will give you a description of the room and possible objects in the room you may interact with  
+<strong>"read"</strong> - Typing 'read [item]' will allow you to read certain text on an object  
+<strong>"inventory"</strong> - Typing 'inventory' will allow the player to look at current items they hold  
+<strong>"take"</strong> - Typing 'take [item]' will allow you to take certain items and keep them in your inventory to possibly use them later  
+<strong>"drop"</strong> - Typing 'drop [item]' will drop an item and it will leave your inventory  
 
 
 ## Ref Links
